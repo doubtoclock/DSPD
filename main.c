@@ -2,13 +2,14 @@
 #include <string.h>
 #include <ctype.h>
 #include <time.h>
+#include <stdlib.h>
 
 #define MAX_SKU 3000
 #define MAX_ORD 5000
 #define MAX_ITEMS 20
 #define NAME_LEN 50
 
-// ---------- STRUCT DEFINITIONS ----------
+//struct definitions
 typedef struct {
     int id;
     char name[NAME_LEN];
@@ -26,16 +27,16 @@ typedef struct {
     int id;
     OrderItem items[MAX_ITEMS];
     int itemCount;
-    char status[15];   // PLACED / DELIVERED / CANCELLED
+    char status[15]; //placed / delivered / cancelled
     time_t timestamp;
 } Order;
 
-// ---------- GLOBAL ARRAYS ----------
+//global arrays
 SKU skus[MAX_SKU];
 Order orders[MAX_ORD];
 int skuCount = 0, orderCount = 0;
 
-// ---------- HELPER FUNCTIONS ----------
+//helper functions
 int findSKUIndexById(int id) {
     for (int i = 0; i < skuCount; i++)
         if (skus[i].id == id)
@@ -55,9 +56,72 @@ void toLowerCase(char *str) {
         str[i] = tolower(str[i]);
 }
 
-// ---------- FEATURE IMPLEMENTATIONS ----------
+//file handling
+void saveSKUsToFile() {
+    FILE *f = fopen("skus.csv", "w");
+    if (!f) {
+        printf("Error saving SKUs!\n");
+        return;
+    }
+    fprintf(f, "id,name,price,stock,soldCount\n");
+    for (int i = 0; i < skuCount; i++)
+        fprintf(f, "%d,%s,%.2f,%d,%d\n", skus[i].id, skus[i].name, skus[i].price, skus[i].stock, skus[i].soldCount);
+    fclose(f);
+}
 
-// 1. Add SKU
+void loadSKUsFromFile() {
+    FILE *f = fopen("skus.csv", "r");
+    if (!f) return;
+    char line[200];
+    fgets(line, sizeof(line), f); // skip header
+    while (fgets(line, sizeof(line), f)) {
+        SKU s;
+        if (sscanf(line, "%d,%49[^,],%f,%d,%d", &s.id, s.name, &s.price, &s.stock, &s.soldCount) == 5)
+            skus[skuCount++] = s;
+    }
+    fclose(f);
+}
+
+void saveOrdersToFile() {
+    FILE *f = fopen("orders.csv", "w");
+    if (!f) {
+        printf("Error saving Orders!\n");
+        return;
+    }
+    fprintf(f, "id,status,timestamp,itemCount,items\n");
+    for (int i = 0; i < orderCount; i++) {
+        fprintf(f, "%d,%s,%ld,%d,", orders[i].id, orders[i].status, orders[i].timestamp, orders[i].itemCount);
+        for (int j = 0; j < orders[i].itemCount; j++) {
+            fprintf(f, "%d:%d;", orders[i].items[j].skuId, orders[i].items[j].quantity);
+        }
+        fprintf(f, "\n");
+    }
+    fclose(f);
+}
+
+void loadOrdersFromFile() {
+    FILE *f = fopen("orders.csv", "r");
+    if (!f) return;
+    char line[400];
+    fgets(line, sizeof(line), f); // skip header
+    while (fgets(line, sizeof(line), f)) {
+        Order o;
+        char itemsStr[300];
+        if (sscanf(line, "%d,%14[^,],%ld,%d,%299[^\n]", &o.id, o.status, &o.timestamp, &o.itemCount, itemsStr) == 5) {
+            o.itemCount = 0;
+            char *token = strtok(itemsStr, ";");
+            while (token && o.itemCount < MAX_ITEMS) {
+                sscanf(token, "%d:%d", &o.items[o.itemCount].skuId, &o.items[o.itemCount].quantity);
+                o.itemCount++;
+                token = strtok(NULL, ";");
+            }
+            orders[orderCount++] = o;
+        }
+    }
+    fclose(f);
+}
+
+//feature implementations
 void addSKU() {
     SKU s;
     printf("Enter SKU ID: ");
@@ -85,7 +149,6 @@ void addSKU() {
     printf("SKU added successfully!\n");
 }
 
-// 2. Update SKU
 void updateSKU() {
     int id;
     printf("Enter SKU ID to update: ");
@@ -103,7 +166,6 @@ void updateSKU() {
     printf("Updated successfully!\n");
 }
 
-// 3. Delete SKU
 void deleteSKU() {
     int id;
     printf("Enter SKU ID to delete: ");
@@ -114,7 +176,6 @@ void deleteSKU() {
         return;
     }
 
-    // Check if SKU appears in any delivered order
     for (int i = 0; i < orderCount; i++) {
         if (strcmp(orders[i].status, "DELIVERED") == 0) {
             for (int j = 0; j < orders[i].itemCount; j++) {
@@ -132,7 +193,6 @@ void deleteSKU() {
     printf("SKU deleted successfully.\n");
 }
 
-// 4. Place Order
 void placeOrder() {
     if (skuCount == 0) {
         printf("No SKUs available.\n");
@@ -175,7 +235,6 @@ void placeOrder() {
     printf("Order placed successfully! Order ID: %d | Subtotal: %.2f\n", o.id, total);
 }
 
-// 5. Deliver Order
 void deliverOrder() {
     int id;
     printf("Enter Order ID to deliver: ");
@@ -214,7 +273,6 @@ void deliverOrder() {
     printf("Order delivered successfully.\n");
 }
 
-// 6. Cancel Order
 void cancelOrder() {
     int id;
     printf("Enter Order ID to cancel: ");
@@ -233,93 +291,35 @@ void cancelOrder() {
     printf("Order cancelled successfully.\n");
 }
 
-// 7. Search SKU by name substring
-void searchSKU() {
-    char query[NAME_LEN], tempName[NAME_LEN];
-    printf("Enter substring to search: ");
-    scanf(" %[^\n]", query);
-    toLowerCase(query);
-
-    printf("Results:\n");
-    for (int i = 0; i < skuCount; i++) {
-        strcpy(tempName, skus[i].name);
-        toLowerCase(tempName);
-        if (strstr(tempName, query))
-            printf("ID: %d | Name: %s | Price: %.2f | Stock: %d\n", skus[i].id, skus[i].name, skus[i].price, skus[i].stock);
-    }
-}
-
-// 8. Sort Orders by time
-void sortOrdersByTime() {
-    for (int i = 0; i < orderCount - 1; i++) {
-        for (int j = i + 1; j < orderCount; j++) {
-            if (orders[i].timestamp > orders[j].timestamp ||
-                (orders[i].timestamp == orders[j].timestamp && orders[i].id > orders[j].id)) {
-                Order temp = orders[i];
-                orders[i] = orders[j];
-                orders[j] = temp;
-            }
-        }
-    }
-    printf("Orders sorted by time.\n");
-}
-
-// 9. Top-K Bestsellers
 void topKBestsellers() {
     int k;
     printf("Enter K: ");
     scanf("%d", &k);
     if (k > skuCount) k = skuCount;
 
+    SKU sorted[MAX_SKU];
+    memcpy(sorted, skus, sizeof(SKU) * skuCount);
+
     for (int i = 0; i < skuCount - 1; i++)
         for (int j = i + 1; j < skuCount; j++)
-            if (skus[i].soldCount < skus[j].soldCount ||
-               (skus[i].soldCount == skus[j].soldCount && strcmp(skus[i].name, skus[j].name) > 0)) {
-                SKU temp = skus[i];
-                skus[i] = skus[j];
-                skus[j] = temp;
-            }
+            if (sorted[i].soldCount < sorted[j].soldCount)
+                { SKU temp = sorted[i]; sorted[i] = sorted[j]; sorted[j] = temp; }
 
     printf("Top-%d Bestsellers:\n", k);
     for (int i = 0; i < k; i++)
-        printf("%d. %s (Sold: %d)\n", i + 1, skus[i].name, skus[i].soldCount);
+        printf("%d. %s (Sold: %d)\n", i + 1, sorted[i].name, sorted[i].soldCount);
 }
 
-// 10. ABC Analysis
-void abcAnalysis() {
-    int totalSold = 0;
-    for (int i = 0; i < skuCount; i++)
-        totalSold += skus[i].soldCount;
-    if (totalSold == 0) {
-        printf("No sales data yet.\n");
-        return;
-    }
-
-    // Sort by soldCount descending
-    for (int i = 0; i < skuCount - 1; i++)
-        for (int j = i + 1; j < skuCount; j++)
-            if (skus[i].soldCount < skus[j].soldCount) {
-                SKU temp = skus[i];
-                skus[i] = skus[j];
-                skus[j] = temp;
-            }
-
-    float cumulative = 0;
-    printf("ABC Analysis:\n");
-    for (int i = 0; i < skuCount; i++) {
-        cumulative += (float)skus[i].soldCount / totalSold * 100;
-        char cat = (cumulative <= 80) ? 'A' : (cumulative <= 95) ? 'B' : 'C';
-        printf("%-20s | Sold: %4d | Category: %c\n", skus[i].name, skus[i].soldCount, cat);
-    }
-}
-
-// ---------- MAIN MENU ----------
+//main menu
 int main() {
+    loadSKUsFromFile();
+    loadOrdersFromFile();
+
     int choice;
     do {
-        printf("\n--- Blinkit-Lite Menu ---\n");
+        printf("\nBlinkit-Lite Menu\n");
         printf("1. Add SKU\n2. Update SKU\n3. Delete SKU\n4. Place Order\n5. Deliver Order\n6. Cancel Order\n");
-        printf("7. Search SKU\n8. Sort Orders by Time\n9. Top-K Bestsellers\n10. ABC Analysis\n0. Exit\n");
+        printf("7. Top-K Bestsellers\n0. Exit\n");
         printf("Enter choice: ");
         scanf("%d", &choice);
 
@@ -330,12 +330,15 @@ int main() {
             case 4: placeOrder(); break;
             case 5: deliverOrder(); break;
             case 6: cancelOrder(); break;
-            case 7: searchSKU(); break;
-            case 8: sortOrdersByTime(); break;
-            case 9: topKBestsellers(); break;
-            case 10: abcAnalysis(); break;
-            case 0: printf("Exiting...\n"); break;
-            default: {printf("Invalid choice!\n");}
+            case 7: topKBestsellers(); break;
+            case 0:
+                printf("Saving data...\n");
+                saveSKUsToFile();
+                saveOrdersToFile();
+                printf("Exiting...\n");
+                break;
+            default:
+                {printf("Invalid choice!\n"); choice = 0;}
         }
     } while (choice != 0);
 
