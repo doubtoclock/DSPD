@@ -1,2 +1,1 @@
-id,name,price,stock,soldCount
-1,frooti,10.00,99,1
+skuId,name,category,price,stock,soldCount
