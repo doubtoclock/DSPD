@@ -59,6 +59,28 @@ int findOrderIndexById(int id) {// cant use binary search as orders may be sorte
     return -1;
 }
 
+int isValidDateTime(long long t) {
+    long long year = t / 100000000LL;
+    long long month = (t / 1000000LL) % 100;
+    long long day = (t / 10000LL) % 100;
+    long long hour = (t / 100LL) % 100;
+    long long minute = (t)% 100;
+
+    if (year < 2000 || year > 9999 || month < 1 || month > 12 ||
+        hour < 0 || hour > 23 || minute < 0 || minute > 59)
+        return 0;
+
+    int maxDay;
+    if (month == 2)
+        maxDay = ((year % 4 == 0 && year % 100 != 0) || (year % 400 == 0)) ? 29 : 28;
+    else if (month == 4 || month == 6 || month == 9 || month == 11)
+        maxDay = 30;
+    else
+        maxDay = 31;
+
+    return (day >= 1 && day <= maxDay);
+}
+
 // CSV Save / Load 
 void saveDataToFiles() {
     FILE *f = fopen(SKU_FILE, "w");
@@ -231,6 +253,11 @@ void placeOrder() {
     }
     printf("Enter orderTime (YYYYMMDDHHMM): "); 
     scanf("%lld", &o.orderTime);
+    if(!isValidDateTime(o.orderTime))
+    {
+        printf("Invalid datetime");
+        return;
+    }
 
     printf("Number of items (1-%d): ", MAX_ITEMS);
     scanf("%d", &o.itemCount);
@@ -270,12 +297,17 @@ void deliverOrder() {
 
     printf("Delivery time (YYYYMMDDHHMM): "); 
     scanf("%lld", &o->deliveryTime);
+    if(!isValidDateTime(o->deliveryTime))
+    {
+        printf("Invalid datetime");
+        return;
+    }
 
     for (int i = 0; i < o->itemCount; i++) {
         int sidx = findSKUIndexById(o->itemIds[i]);
         if (sidx == -1 || skus[sidx].stock < o->itemQty[i]) {
             printf("Insufficient stock for SKU %d.\n", o->itemIds[i]);
-            o->status = 2; return;
+            return;
         }
     }
     for (int i = 0; i < o->itemCount; i++) {
@@ -374,7 +406,7 @@ void main() {
     int ch;
     loadDataFromFiles();
     do {
-        printf("\n--- BLINKIT-LITE MENU ---\n");
+        printf("\f\n--- BLINKIT-LITE MENU ---\n");
         printf("1) Add SKU\n");
         printf("2) Update/Delete SKU\n");
         printf("3) Place Order\n");
