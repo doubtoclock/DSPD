@@ -42,18 +42,20 @@ const char *ORDER_FILE = "orders.csv";
 //Utility functions
 void strtolowercpy(char *dest, const char *src) {
     for (; *src; src++, dest++) 
-        *dest = (char)tolower((unsigned char)*src);
+        *dest = (char)tolower((char)*src);
     *dest = '\0';
 }
 
-int findSKUIndexById(int id) {
-    for (int i = 0; i < skuCount; ++i)
+int findSKUIndexById(int id) {//// cant use binary search as SKUs may or may not be sorted by id depending on the inputs and time of calling of fn
+    for (int i = 0; i < skuCount; i++)
         if (skus[i].skuId == id) return i;
     return -1;
 }
-int findOrderIndexById(int id) {
+
+int findOrderIndexById(int id) {// cant use binary search as orders may be sorted by time or id depending on the inputs and time of calling of fn
     for (int i = 0; i < orderCount; ++i)
-        if (orders[i].orderId == id) return i;
+        if (orders[i].orderId == id) 
+            return i;
     return -1;
 }
 
@@ -65,7 +67,8 @@ void saveDataToFiles() {
     }
     else{
         fprintf(f, "skuId,name,category,price,stock,soldCount\n");
-        for (int i = 0; i < skuCount; i++) {
+        for (int i = 0; i < skuCount; i++) 
+        {
             SKU *s = &skus[i];
             fprintf(f, "%d,%s,%s,%.2f,%d,%d\n", s->skuId, s->name, s->category, s->price, s->stock, s->soldCount);
         }
@@ -161,6 +164,7 @@ void printOrder(const Order *o) {
 // Functional Requirements 
 
 void addSKU() {
+
     if (skuCount >= MAX_SKU) { 
         printf("Max SKUs reached.\n"); return; 
     }
@@ -221,15 +225,30 @@ void placeOrder() {
     if (orderCount >= MAX_ORD) return;
     Order o; o.status = 0; o.deliveryTime = 0; o.subtotal = 0;
     printf("Enter Order ID: "); scanf("%d", &o.orderId);
-    if (findOrderIndexById(o.orderId) != -1) { printf("Exists.\n"); return; }
-    printf("Enter orderTime (YYYYMMDDHHMM): "); scanf("%lld", &o.orderTime);
+    if (findOrderIndexById(o.orderId) != -1) { 
+        printf("Exists.\n"); 
+        return; 
+    }
+    printf("Enter orderTime (YYYYMMDDHHMM): "); 
+    scanf("%lld", &o.orderTime);
+
     printf("Number of items (1-%d): ", MAX_ITEMS);
     scanf("%d", &o.itemCount);
     for (int i = 0; i < o.itemCount; i++) {
         printf("Item %d SKU ID: ", i + 1); scanf("%d", &o.itemIds[i]);
         int idx = findSKUIndexById(o.itemIds[i]);
-        if (idx == -1) { printf("Invalid SKU.\n"); return; }
+        if (idx == -1) 
+        { 
+            printf("Invalid SKU.\n"); \
+            return; 
+        }
         printf("Quantity: "); scanf("%d", &o.itemQty[i]);
+        SKU *s = &skus[idx];
+        if (s->stock < o.itemQty[i])
+        {
+            printf("Not enough stock");
+            return;
+        }
         o.subtotal += skus[idx].price * o.itemQty[i];
     }
     orders[orderCount++] = o;
@@ -239,10 +258,19 @@ void placeOrder() {
 void deliverOrder() {
     int id; printf("Order ID: "); scanf("%d", &id);
     int idx = findOrderIndexById(id);
-    if (idx == -1) { printf("Not found.\n"); return; }
+    if (idx == -1) { 
+        printf("Not found.\n"); 
+        return; 
+    }
     Order *o = &orders[idx];
-    if (o->status != 0) { printf("Not in placed state.\n"); return; }
-    printf("Delivery time (YYYYMMDDHHMM): "); scanf("%lld", &o->deliveryTime);
+    if (o->status != 0) { 
+        printf("Not in placed state.\n"); 
+        return; 
+    }
+
+    printf("Delivery time (YYYYMMDDHHMM): "); 
+    scanf("%lld", &o->deliveryTime);
+
     for (int i = 0; i < o->itemCount; i++) {
         int sidx = findSKUIndexById(o->itemIds[i]);
         if (sidx == -1 || skus[sidx].stock < o->itemQty[i]) {
@@ -262,15 +290,25 @@ void deliverOrder() {
 void cancelOrder() {
     int id; printf("Order ID: "); scanf("%d", &id);
     int idx = findOrderIndexById(id);
-    if (idx == -1) { printf("Not found.\n"); return; }
-    if (orders[idx].status != 0) { printf("Cannot cancel now.\n"); return; }
+
+    if (idx == -1) { 
+        printf("Not found.\n"); 
+        return; 
+    }
+
+    if (orders[idx].status != 0) { 
+        printf("Cannot cancel now.\n"); 
+        return; 
+    }
     orders[idx].status = 2;
     printf("Cancelled.\n");
 }
 
 void searchSKUByName() {
     getchar();
-    char q[64]; printf("Substring: "); fgets(q, 64, stdin); q[strcspn(q, "\n")] = 0;
+    char q[64]; printf("Substring: "); 
+    fgets(q, 64, stdin); 
+    q[strcspn(q, "\n")] = 0;
     char ql[64]; strtolowercpy(ql, q);
     int found = 0;
     for (int i = 0; i < skuCount; i++) {
@@ -322,11 +360,19 @@ void abcAnalysis() {
 }
 
 // Listing/Menu 
-void listAllSKUs() { for (int i = 0; i < skuCount; i++) printSKU(&skus[i]); }
-void listAllOrders() { for (int i = 0; i < orderCount; i++) printOrder(&orders[i]); }
+void listAllSKUs() { 
+    for (int i = 0; i < skuCount; i++) 
+        printSKU(&skus[i]); 
+}
+
+void listAllOrders() { 
+    for (int i = 0; i < orderCount; i++) 
+        printOrder(&orders[i]); 
+}
 
 void main() {
     int ch;
+    loadDataFromFiles();
     do {
         printf("\n--- BLINKIT-LITE MENU ---\n");
         printf("1) Add SKU\n");
