@@ -405,7 +405,7 @@ void main() {
     int ch;
     loadDataFromFiles();
     do {
-        printf("\f\n--- BLINKIT-LITE MENU ---\n");
+        printf("\n--- BLINKIT-LITE MENU ---\n");
         printf("1) Add SKU\n");
         printf("2) Update/Delete SKU\n");
         printf("3) Place Order\n");

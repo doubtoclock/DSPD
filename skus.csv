@@ -4,3 +4,4 @@ skuId,name,category,price,stock,soldCount
 3,Lays Tangy Tomato,Food,20.00,100,0
 4,Oreo,Food,10.00,100,0
 5,Diet Coke,Drink,40.00,100,0
+6,Coke Zero,Drink,40.00,100,0
