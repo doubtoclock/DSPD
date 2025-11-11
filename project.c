@@ -21,7 +21,7 @@ typedef struct {
 typedef struct {
     int orderId;
     long long orderTime;
-    int status; //0=Placed,1=Delivered,2=Cancelled
+    int order_status; //0=Placed,1=Delivered,2=Cancelled
     long long deliveryTime;
     int itemIds[MAX_ITEMS];
     int itemQty[MAX_ITEMS];
@@ -102,10 +102,10 @@ void saveDataToFiles() {
         printf("Error saving %s\n", ORDER_FILE); 
     }
     else{
-        fprintf(f, "orderId,orderTime,status,deliveryTime,itemCount,subtotal,itemIds,itemQtys\n");
+        fprintf(f, "orderId,orderTime,order_status,deliveryTime,itemCount,subtotal,itemIds,itemQtys\n");
         for (int i = 0; i < orderCount; i++) {
             Order *o = &orders[i];
-            fprintf(f, "%d,%lld,%d,%lld,%d,%.2f,\"", o->orderId, o->orderTime, o->status, o->deliveryTime, o->itemCount, o->subtotal);
+            fprintf(f, "%d,%lld,%d,%lld,%d,%.2f,\"", o->orderId, o->orderTime, o->order_status, o->deliveryTime, o->itemCount, o->subtotal);
             for (int j = 0; j < o->itemCount; j++) {
                 fprintf(f, "%d", o->itemIds[j]);
                 if (j < o->itemCount - 1) fprintf(f, "|");
@@ -147,7 +147,7 @@ void loadDataFromFiles() {
             Order o;
             char ids[256], qtys[256];
             if (sscanf(line, "%d,%lld,%d,%lld,%d,%f,\"%255[^\"]\",\"%255[^\"]\"",
-                       &o.orderId, &o.orderTime, &o.status, &o.deliveryTime, &o.itemCount, &o.subtotal, ids, qtys) == 8) {
+                       &o.orderId, &o.orderTime, &o.order_status, &o.deliveryTime, &o.itemCount, &o.subtotal, ids, qtys) == 8) {
                 o.itemCount = (o.itemCount > MAX_ITEMS) ? MAX_ITEMS : o.itemCount;
                 int k = 0;
                 char *tok = strtok(ids, "|");
@@ -174,9 +174,9 @@ void printSKU(const SKU *s) {
            s->skuId, s->name, s->category, s->price, s->stock, s->soldCount);
 }
 void printOrder(const Order *o) {
-    printf("OrderID:%d | Time:%lld | Status:%s | DeliveryTime:%lld | Items:%d | Subtotal:%.2f\n",
+    printf("OrderID:%d | Time:%lld | order_status:%s | DeliveryTime:%lld | Items:%d | Subtotal:%.2f\n",
            o->orderId, o->orderTime,
-           (o->status == 0 ? "Placed" : (o->status == 1 ? "Delivered" : "Cancelled")),
+           (o->order_status == 0 ? "Placed" : (o->order_status == 1 ? "Delivered" : "Cancelled")),
            o->deliveryTime, o->itemCount, o->subtotal);
     for (int i = 0; i < o->itemCount; ++i)
         printf("   Item %d -> SKU:%d x %d\n", i + 1, o->itemIds[i], o->itemQty[i]);
@@ -232,7 +232,7 @@ void updateOrDeleteSKU() {
     } else if (ch == 2) {
         int referenced = 0;
         for (int i = 0; i < orderCount; i++)
-            if (orders[i].status == 1)
+            if (orders[i].order_status == 1)
                 for (int j = 0; j < orders[i].itemCount; j++)
                     if (orders[i].itemIds[j] == id) referenced = 1;
         if (referenced) { printf("Cannot delete; referenced by delivered orders.\n"); return; }
@@ -244,7 +244,7 @@ void updateOrDeleteSKU() {
 
 void placeOrder() {
     if (orderCount >= MAX_ORD) return;
-    Order o; o.status = 0; o.deliveryTime = 0; o.subtotal = 0;
+    Order o; o.order_status = 0; o.deliveryTime = 0; o.subtotal = 0;
     printf("Enter Order ID: "); scanf("%d", &o.orderId);
     if (findOrderIndexById(o.orderId) != -1) { 
         printf("Exists.\n"); 
@@ -289,7 +289,7 @@ void deliverOrder() {
         return; 
     }
     Order *o = &orders[idx];
-    if (o->status != 0) { 
+    if (o->order_status != 0) { 
         printf("Not in placed state.\n"); 
         return; 
     }
@@ -314,7 +314,7 @@ void deliverOrder() {
         skus[sidx].stock -= o->itemQty[i];
         skus[sidx].soldCount += o->itemQty[i];
     }
-    o->status = 1;
+    o->order_status = 1;
     printf("Delivered successfully.\n");
 }
 
@@ -327,11 +327,11 @@ void cancelOrder() {
         return; 
     }
 
-    if (orders[idx].status != 0) { 
+    if (orders[idx].order_status != 0) { 
         printf("Cannot cancel now.\n"); 
         return; 
     }
-    orders[idx].status = 2;
+    orders[idx].order_status = 2;
     printf("Cancelled.\n");
 }
 
@@ -378,21 +378,51 @@ void topBestsellers() {
 
 void abcAnalysis() {
     long total = 0;
-    for (int i = 0; i < skuCount; i++) total += skus[i].soldCount;
-    if (total == 0) { printf("No sales.\n"); return; }
-    int idxs[MAX_SKU]; for (int i = 0; i < skuCount; i++) idxs[i] = i;
+    for (int i = 0; i < skuCount; i++)
+        total += skus[i].soldCount;
+
+    if (total == 0) {
+        printf("No sales.\n");
+        return;
+    }
+
+    int idxs[MAX_SKU];
+    for (int i = 0; i < skuCount; i++) idxs[i] = i;
+
+    // Sort descending by soldCount
     for (int i = 0; i < skuCount - 1; i++)
         for (int j = i + 1; j < skuCount; j++)
             if (skus[idxs[j]].soldCount > skus[idxs[i]].soldCount) {
-                int t = idxs[i]; idxs[i] = idxs[j]; idxs[j] = t;
+                int t = idxs[i];
+                idxs[i] = idxs[j];
+                idxs[j] = t;
             }
+
     double cum = 0;
+    int countA = 0, countB = 0, countC = 0;
+
+    printf("\nABC Analysis (sorted by sales):\n");
+    printf("---------------------------------------------\n");
+
     for (int i = 0; i < skuCount; i++) {
         SKU *s = &skus[idxs[i]];
-        cum += (100.0 * s->soldCount) / total;
-        char cat = (cum <= 80) ? 'A' : (cum <= 95 ? 'B' : 'C');
-        printf("%d) %s Sold:%d Cumulative:%.2f%% Category:%c\n", i + 1, s->name, s->soldCount, cum, cat);
+        double perc = (100.0 * s->soldCount) / total; // individual %
+        cum += perc; // running cumulative %
+
+        char cat;
+        if (cum <= 80.0 || countA == 0) cat = 'A';
+        else if (cum <= 95.0 || countB == 0) cat = 'B';
+        else cat = 'C';
+
+        // count categories for summary
+        if (cat == 'A') countA++;
+        else if (cat == 'B') countB++;
+        else countC++;
+
+        printf("%2d) %-20s | Sold:%5d | Share:%6.2f%% | Cum:%6.2f%% | Cat:%c\n",
+               i + 1, s->name, s->soldCount, perc, cum, cat);
     }
+    printf("Summary: A=%d, B=%d, C=%d | Total Sold=%ld\n", countA, countB, countC, total);
 }
 
 // Listing/Menu 

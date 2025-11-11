@@ -1,7 +1,7 @@
 skuId,name,category,price,stock,soldCount
-1,Frooti,Drink,10.00,100,0
+1,Frooti,Drink,10.00,98,2
 2,Lays Cream and Onion,Food,20.00,100,0
 3,Lays Tangy Tomato,Food,20.00,100,0
 4,Oreo,Food,10.00,100,0
-5,Diet Coke,Drink,40.00,100,0
+5,Diet Coke,Drink,40.00,95,5
 6,Coke Zero,Drink,40.00,100,0
