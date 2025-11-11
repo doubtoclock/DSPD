@@ -166,7 +166,6 @@ void loadDataFromFiles() {
         }
         fclose(f);
     }
-    printf("Loaded %d SKUs and %d Orders from CSV.\n", skuCount, orderCount);
 }
 
 // Print Functions 
@@ -255,7 +254,7 @@ void placeOrder() {
     scanf("%lld", &o.orderTime);
     if(!isValidDateTime(o.orderTime))
     {
-        printf("Invalid datetime");
+        printf("Invalid datetime\n");
         return;
     }
 
