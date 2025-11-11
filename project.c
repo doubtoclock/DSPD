@@ -350,12 +350,17 @@ void searchSKUByName() {
 }
 
 void sortOrdersByTime() {
-    for (int i = 0; i < orderCount - 1; i++)
+    int swaps=-1;
+    for (int i = 0; i < orderCount - 1 && swaps!=0; i++)
+    {   
+        swaps=0;
         for (int j = i + 1; j < orderCount; j++)
             if (orders[j].orderTime < orders[i].orderTime) {
+                swaps++;
                 Order tmp = orders[i]; orders[i] = orders[j]; orders[j] = tmp;
             }
     printf("Sorted by time.\n");
+    }
 }
 
 void topBestsellers() {
