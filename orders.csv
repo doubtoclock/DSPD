@@ -1,3 +1,2 @@
 orderId,orderTime,status,deliveryTime,itemCount,subtotal,itemIds,itemQtys
-1,202513131313,0,0,1,20.00,"2","1"
-2,202511111111,0,0,1,10.00,"1","1"
+1,202511111111,0,0,1,10.00,"1","1"

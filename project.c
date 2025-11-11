@@ -448,6 +448,7 @@ void main() {
                 printf("Data saved. Exiting program.\n");
                 break;
             default:
+                saveDataToFiles();
                 ch=0;
                 printf("Choice entered is not valid. Please try again.\n");
                 break;
