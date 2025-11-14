@@ -1,0 +1,24 @@
+Normal Command to create Executable
+gcc -o main.exe main.c factorial.c
+
+// DYNAMIC LINK
+For ubuntu
+gcc -c -o funcs.o funcs.c
+gcc -shared -o libfuncs.so funcs.o 
+gcc -o main_shared.out main.c -L./ -lfuncs
+For windows
+gcc -c -o funcs.o funcs.c
+gcc -shared -o libfuncs.dll.a funcs.o
+gcc -o main_shared.exe main.c -L./ -lfuncs
+
+// STATIC LINK 
+
+for both windows/ubuntu
+gcc -c funcs.c -o funcs.o
+ar rcs libfuncs.a funcs.o 
+gcc -o main_static.exe main.c -L./ -lfuncs
+
+ar: The archiver command.
+r: Replaces existing object files or adds new ones to the archive.
+c: Creates the archive if it does not exist.
+s: Creates an index for the archive, which is useful for the linker to quickly find symbols.

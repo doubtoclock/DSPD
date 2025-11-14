@@ -301,6 +301,11 @@ void deliverOrder() {
         printf("Invalid datetime");
         return;
     }
+    if(o->deliveryTime<o->orderTime)
+    {
+        printf("Delivery Time cannot be before Order Time");
+        return;
+    }
 
     for (int i = 0; i < o->itemCount; i++) {
         int sidx = findSKUIndexById(o->itemIds[i]);
