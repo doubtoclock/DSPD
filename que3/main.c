@@ -12,64 +12,71 @@ void main()
     printf("\n\nSelect a valid Option : ");
     scanf("%d", &option);
 
-    if (option == 1)
+    switch(option)
     {
-        int b, p;
-        printf("Enter Base (> 0) : ");
-        scanf("%d", &b);
-        printf("Enter Power (>= 0) : ");
-        scanf("%d", &p);
+        case 1:
+        {
+            int b, p;
+            printf("Enter base: ");
+            scanf("%d", &b);
+            printf("Enter power: ");
+            scanf("%d", &p);
 
-        if (b == 0 && p == 0)
-        {
-            printf("Cannot rise base 0 to power 0 (undefined)");
+            if (b == 0 && p == 0)
+            {
+                printf("Cannot compute 0^0 (undefined)");
+            }
+            else if (b >= 0 && p >= 0)
+            {
+                long result = power(b, p);
+                printf("Ans : %ld", result);
+            }
+            else
+            {
+                printf("Base & Power must be positive.");
+            }
+            break;
         }
-        else if (b >= 0 && p >= 0)
-        {
-            long result = power(b, p);
-            printf("Ans : %d", result);
-        }
-        else
-        {
-            printf("Base & Power must be positive.");
-        }
-    }
-    else if (option == 2)
-    {
-        int a;
-        printf("Enter Natural Number : ");
-        scanf("%d", &a);
 
-        if (a < 0)
+        case 2:
         {
-            printf("Number must be positive.");
-        }
-        else
-        {
-            long result = factorial(a);
-            printf("Ans : %d", result);
-        }
-    }
-    else if (option == 3)
-    {
-        int b, p;
-        printf("Enter 1st No (> 0) : ");
-        scanf("%d", &b);
-        printf("Enter 2nd No (> 0) : ");
-        scanf("%d", &p);
+            int a;
+            printf("Enter Natural Number : ");
+            scanf("%d", &a);
 
-        if (b >= 0 && p >= 0)
-        {
-            long result = gcd(b, p);
-            printf("Ans : %d", result);
+            if (a < 0)
+            {
+                printf("Number must be positive.");
+            }
+            else
+            {
+                long result = factorial(a);
+                printf("Ans : %ld", result);
+            }
+            break;
         }
-        else
+
+        case 3:
         {
-            printf("Numbers must be positive.");
+            int b, p;
+            printf("Enter 1st No (> 0) : ");
+            scanf("%d", &b);
+            printf("Enter 2nd No (> 0) : ");
+            scanf("%d", &p);
+
+            if (b >= 0 && p >= 0)
+            {
+                long result = gcd(b, p);
+                printf("Ans : %ld", result);
+            }
+            else
+            {
+                printf("Numbers must be positive.");
+            }
+            break;
         }
-    }
-    else
-    {
-        printf("Not a valid option.");
+
+        default:
+            printf("Not a valid option."); break;
     }
 }

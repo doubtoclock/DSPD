@@ -2,6 +2,9 @@ Normal Command to create Executable
 gcc -o main.exe main.c factorial.c
 
 // DYNAMIC LINK
+{
+    export LD_LIBRARY_PATH=./
+}
 For ubuntu
 gcc -c -o funcs.o funcs.c
 gcc -shared -o libfuncs.so funcs.o 

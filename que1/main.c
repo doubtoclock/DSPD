@@ -13,6 +13,12 @@ void main()
     printf("\n\nSelect a valid Option : ");
     scanf("%d", &option);
 
+    if(!(option<=4 && option >=1))
+    {
+        printf("Invalid choice\n");
+        return;
+    }
+
     float x, y;
     double result;
     int isError = 0;

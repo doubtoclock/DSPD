@@ -17,10 +17,6 @@ float convert(float meter, char unit[])
     {
         return meter / 1000;
     }
-    else if (strcmp(unit, "in") == 0)
-    {
-        return meter * 39.37;
-    }
     else{
         return -1;
     }
