@@ -6,8 +6,8 @@ void main(int argc, char *argv[])
 {
     if (argc != 3)
     {
-        printf("Write: %s <value in meters> <unit>\n", argv[0]);
-        printf("UNITS : km, mm, cm\n");
+        printf("Usage- %s <value in meters> <unit>\n", argv[0]);
+        printf("units: km,mm,cm\n");
         return;
     }
 
